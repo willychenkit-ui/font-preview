@@ -8,7 +8,7 @@
     :root { --bg:#0f1220; --card:#171a2b; --text:#e7e9ff; --muted:#9aa0c3; --border:#2a2f4a; }
     * { box-sizing: border-box; }
     body { margin:0; background: radial-gradient(1200px 800px at 20% -10%, #1b2040, #0f1220); color:var(--text); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial; }
-    .container { max-width:1200px; margin:0 auto; padding:20px; }
+    .container { max-width:1400px; margin:0 auto; padding:20px; }
     h1 { margin:0 0 12px; font-size:24px; }
     .toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
     .input, .search { background:#0c0f1d; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:12px; outline:none; }
@@ -23,21 +23,56 @@
     .name { color:var(--muted); font-size:12px; }
     .btn { cursor:pointer; border:1px solid var(--border); background:#0c0f1d; color:var(--text); border-radius:10px; padding:6px 10px; font-size:12px; }
     .btn:hover { background:#11153a; }
+    .btn.small { padding:4px 8px; font-size:11px; }
     .preview { font-size:28px; line-height:1.4; word-break: break-word; }
     .empty { color:var(--muted); text-align:center; padding:40px 0; }
+    .layout { display:grid; grid-template-columns: 220px 1fr; gap:16px; }
+    .sidebar { background: linear-gradient(180deg, #171a2b, #141733); border:1px solid var(--border); border-radius:18px; padding:14px; height: fit-content; position: sticky; top: 16px; }
+    .side-title { font-size:13px; color:var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+    .side-actions { display:flex; gap:8px; margin:10px 0 6px; }
+    .folder-list { display:flex; flex-direction:column; gap:8px; }
+    .folder-item { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); }
+    .folder-item input { accent-color: #6c7bff; }
+    @media (max-width:900px){
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>字体预览库（高级版）</h1>
-    <div class="toolbar">
-      <input id="textInput" class="input" value="输入你想预览的文字" />
-      <input id="searchInput" class="search" placeholder="搜索字体文件名" />
-    </div>
-    <div class="hint">提示：将字体文件（.ttf/.otf/.woff2）与本文件放在同一目录，并按规则命名，如 font1.ttf ~ font123.ttf</div>
+    <div class="container">
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="side-title">Folders</div>
+        <div class="side-actions">
+          <button id="foldersAll" class="btn small" type="button">All</button>
+          <button id="foldersNone" class="btn small" type="button">None</button>
+        </div>
+        <div class="folder-list" id="folderList">
+          <label class="folder-item"><input type="checkbox" data-folder="FZ-12" checked>FZ-12</label>
+          <label class="folder-item"><input type="checkbox" data-folder="FZ-123" checked>FZ-123</label>
+          <label class="folder-item"><input type="checkbox" data-folder="HY-16" checked>HY-16</label>
+          <label class="folder-item"><input type="checkbox" data-folder="HY-20" checked>HY-20</label>
+          <label class="folder-item"><input type="checkbox" data-folder="HG" checked>HG</label>
+          <label class="folder-item"><input type="checkbox" data-folder="LX" checked>LX</label>
+          <label class="folder-item"><input type="checkbox" data-folder="MN" checked>MN</label>
+          <label class="folder-item"><input type="checkbox" data-folder="YS" checked>YS</label>
+          <label class="folder-item"><input type="checkbox" data-folder="YGY" checked>YGY</label>
+          <label class="folder-item"><input type="checkbox" data-folder="BX" checked>BX</label>
+        </div>
+      </aside>
+      <main>
+        <h1>字体预览库（高级版）</h1>
+        <div class="toolbar">
+          <input id="textInput" class="input" value="输入你想预览的文 ? />
+          <input id="searchInput" class="search" placeholder="搜索字体文件 ? />
+        </div>
+        <div class="hint">提示：将字体文件 ?ttf/.otf/.woff2 ׃  本文件放在同一目录，并按规则命名， ?font1.ttf ~ font123.ttf</div>
 
-    <div id="grid" class="grid"></div>
-    <div id="empty" class="empty" style="display:none;">没有匹配的字体</div>
+        <div id="grid" class="grid"></div>
+        <div id="empty" class="empty" style="display:none;">没有匹配的字 ?/div>
+      </main>
+    </div>
   </div>
 
   <script>
@@ -214,30 +249,30 @@
   { family: "Rayna", file: "HY-20/Rayna.ttf" },
   { family: "SentyTEA", file: "HY-20/SentyTEA.ttf" },
   { family: "HG_UKK_TZA3", file: "HG/HG_UKK_TZA3.ttf" },
-  { family: "李旭科书法", file: "LX/李旭科书法.ttf" },
+  { family: "李旭科书 ?, file: "LX/李旭科书 ?ttf" },
   { family: "FrutigerLTPro-Bold", file: "MN/FrutigerLTPro-Bold.ttf" },
   { family: "FrutigerLTPro-Light", file: "MN/FrutigerLTPro-Light.ttf" },
   { family: "FrutigerLTPro-Roman", file: "MN/FrutigerLTPro-Roman.ttf" },
-  { family: "演示汉楷宋", file: "YS/演示汉楷宋.ttf" },
-  { family: "演示流云楷", file: "YS/演示流云楷.ttf" },
-  { family: "演示宁缺体", file: "YS/演示宁缺体.ttf" },
-  { family: "演示少年行", file: "YS/演示少年行.ttf" },
+  { family: "演示汉楷 ?, file: "YS/演示汉楷 ?ttf" },
+  { family: "演示流云 ?, file: "YS/演示流云 ?ttf" },
+  { family: "演示宁缺 ?, file: "YS/演示宁缺 ?ttf" },
+  { family: "演示少年 ?, file: "YS/演示少年 ?ttf" },
   { family: "演示镇魂行楷", file: "YS/演示镇魂行楷.woff2" },
   { family: "叶根友畅行书", file: "YGY/叶根友畅行书.ttf" },
-  { family: "叶根友刀锋黑草08", file: "YGY/叶根友刀锋黑草08.ttf" },
-  { family: "叶根友度黑", file: "YGY/叶根友度黑.ttf" },
+  { family: "叶根友刀锋黑 ?8", file: "YGY/叶根友刀锋黑 ?8.ttf" },
+  { family: "叶根友度 ?, file: "YGY/叶根友度 ?ttf" },
   { family: "叶根友静韵体", file: "YGY/叶根友静韵体.ttf" },
-  { family: "叶根友空心简体08", file: "YGY/叶根友空心简体08.ttf" },
+  { family: "叶根友空心简 ?8", file: "YGY/叶根友空心简 ?8.ttf" },
   { family: "叶根友微刚体", file: "YGY/叶根友微刚体.ttf" },
   { family: "叶根友微黑简", file: "YGY/叶根友微黑简.ttf" },
-  { family: "叶根友微宋特黑 ", file: "YGY/叶根友微宋特黑 .ttf" },
+  { family: "叶根友微宋特 ?", file: "YGY/叶根友微宋特 ?.ttf" },
   { family: "叶根友微影体", file: "YGY/叶根友微影体.ttf" },
   { family: "叶根友新特宋", file: "YGY/叶根友新特宋.ttf" },
-  { family: "叶根友元碑", file: "YGY/叶根友元碑.ttf" },
+  { family: "叶根友元 ?, file: "YGY/叶根友元 ?ttf" },
   { family: "BXMYHFont-Regular", file: "BX/BXMYHFont-Regular.ttf" }
 ];
 
-    // ===== 2) 动态注入 @font-face =====
+    // ===== 2) 动态注 ?@font-face =====
     const styleEl = document.createElement('style');
     document.head.appendChild(styleEl);
     styleEl.textContent = fonts.map(f => `
@@ -254,7 +289,29 @@
     const textInput = document.getElementById('textInput');
     const searchInput = document.getElementById('searchInput');
 
-    function render(list) {
+        const foldersAllBtn = document.getElementById('foldersAll');
+    const foldersNoneBtn = document.getElementById('foldersNone');
+    const folderList = document.getElementById('folderList');
+    const folderChecks = Array.from(folderList.querySelectorAll('input[data-folder]'));
+    const selectedFolders = new Set(folderChecks.filter(c => c.checked).map(c => c.dataset.folder));
+
+    function getFolder(file) {
+      const idx = file.indexOf('/');
+      return idx === -1 ? '' : file.slice(0, idx);
+    }
+
+    function applyFilters() {
+      const q = searchInput.value.toLowerCase();
+      const list = fonts.filter(f => {
+        const folder = getFolder(f.file);
+        const inFolder = selectedFolders.has(folder);
+        const inSearch = f.file.toLowerCase().includes(q);
+        return inFolder && inSearch;
+      });
+      render(list);
+      const val = textInput.value;
+      document.querySelectorAll('.preview').forEach(el => el.textContent = val);
+    }function render(list) {
       grid.innerHTML = '';
       if (!list.length) {
         empty.style.display = 'block';
@@ -279,7 +336,7 @@
         btn.textContent = '复制名称';
         btn.onclick = () => {
           navigator.clipboard.writeText(f.file);
-          btn.textContent = '已复制';
+          btn.textContent = '已复 ?;
           setTimeout(() => btn.textContent = '复制名称', 1200);
         };
 
@@ -299,26 +356,44 @@
     }
 
     // 初始渲染
-    render(fonts);
+    applyFilters();
 
     // ===== 4) 输入联动 =====
     textInput.addEventListener('input', () => {
       const val = textInput.value;
       document.querySelectorAll('.preview').forEach(el => el.textContent = val);
-      // 同步到URL（可分享）
-      const url = new URL(location.href);
+      // 同步到URL（可分享 ?      const url = new URL(location.href);
       url.searchParams.set('text', val);
       history.replaceState(null, '', url);
     });
 
     // ===== 5) 搜索过滤 =====
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.toLowerCase();
-      const list = fonts.filter(f => f.file.toLowerCase().includes(q));
-      render(list);
-      // 重新应用当前文本
-      const val = textInput.value;
-      document.querySelectorAll('.preview').forEach(el => el.textContent = val);
+        searchInput.addEventListener('input', () => {
+      applyFilters();
+    });
+
+    folderChecks.forEach(chk => {
+      chk.addEventListener('change', () => {
+        if (chk.checked) selectedFolders.add(chk.dataset.folder);
+        else selectedFolders.delete(chk.dataset.folder);
+        applyFilters();
+      });
+    });
+
+    foldersAllBtn.addEventListener('click', () => {
+      folderChecks.forEach(chk => {
+        chk.checked = true;
+        selectedFolders.add(chk.dataset.folder);
+      });
+      applyFilters();
+    });
+
+    foldersNoneBtn.addEventListener('click', () => {
+      folderChecks.forEach(chk => {
+        chk.checked = false;
+      });
+      selectedFolders.clear();
+      applyFilters();
     });
 
     // ===== 6) 读取分享参数 =====
@@ -331,3 +406,4 @@
   </script>
 </body>
 </html>
+
