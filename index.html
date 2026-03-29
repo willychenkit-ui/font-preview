@@ -1,59 +1,151 @@
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-
-export default function FontLibraryApp() {
-  const [text, setText] = useState("输入你想预览的文字");
-
-  // 自动生成字体列表（1~50，可自行改）
-  const fonts = Array.from({ length: 50 }, (_, i) => ({
-    name: `font${i + 1}`,
-    file: `font${i + 1}.ttf`
-  }));
-
-  return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">字体预览库</h1>
-
-      {/* 输入框 */}
-      <Input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className="text-lg"
-      />
-
-      {/* 字体展示 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {fonts.map((font, index) => (
-          <Card key={index} className="shadow rounded-2xl">
-            <CardContent className="p-4 space-y-2">
-              <div className="text-sm text-gray-500">{font.file}</div>
-              <div
-                style={{
-                  fontFamily: font.name,
-                  fontSize: "28px"
-                }}
-              >
-                {text}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* 动态注入字体 */}
-      <style>
-        {fonts
-          .map(
-            (font) => `
-          @font-face {
-            font-family: ${font.name};
-            src: url(${font.file});
-          }
-        `
-          )
-          .join("\n")}
-      </style>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>字体预览库（高级版）</title>
+  <style>
+    :root { --bg:#0f1220; --card:#171a2b; --text:#e7e9ff; --muted:#9aa0c3; --border:#2a2f4a; }
+    * { box-sizing: border-box; }
+    body { margin:0; background: radial-gradient(1200px 800px at 20% -10%, #1b2040, #0f1220); color:var(--text); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial; }
+    .container { max-width:1200px; margin:0 auto; padding:20px; }
+    h1 { margin:0 0 12px; font-size:24px; }
+    .toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .input, .search { background:#0c0f1d; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:12px; outline:none; }
+    .input { flex:1; min-width:240px; font-size:16px; }
+    .search { width:220px; }
+    .hint { color:var(--muted); font-size:12px; }
+    .grid { display:grid; grid-template-columns: repeat(1, 1fr); gap:12px; margin-top:16px; }
+    @media (min-width:640px){ .grid{ grid-template-columns: repeat(2, 1fr);} }
+    @media (min-width:1024px){ .grid{ grid-template-columns: repeat(3, 1fr);} }
+    .card { background: linear-gradient(180deg, #171a2b, #141733); border:1px solid var(--border); border-radius:18px; padding:14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .name { color:var(--muted); font-size:12px; }
+    .btn { cursor:pointer; border:1px solid var(--border); background:#0c0f1d; color:var(--text); border-radius:10px; padding:6px 10px; font-size:12px; }
+    .btn:hover { background:#11153a; }
+    .preview { font-size:28px; line-height:1.4; word-break: break-word; }
+    .empty { color:var(--muted); text-align:center; padding:40px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>字体预览库（高级版）</h1>
+    <div class="toolbar">
+      <input id="textInput" class="input" value="输入你想预览的文字" />
+      <input id="searchInput" class="search" placeholder="搜索字体文件名" />
     </div>
-  );
-}
+    <div class="hint">提示：将字体文件（.ttf/.otf/.woff2）与本文件放在同一目录，并按规则命名，如 font1.ttf ~ font123.ttf</div>
+
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" style="display:none;">没有匹配的字体</div>
+  </div>
+
+  <script>
+    // ===== 1) 在这里配置你的字体 =====
+    // 方式A：规则命名（推荐）
+    const TOTAL = 50; // 改成你的数量，例如 123
+    const fonts = Array.from({ length: TOTAL }, (_, i) => ({
+      family: `font${i + 1}`,
+      file: `font${i + 1}.ttf`
+    }));
+
+    // 方式B：自定义列表（如果不是规则命名，取消上面，改用下面）
+    // const fonts = [
+    //   { family: 'fz1', file: '方正XX.ttf' },
+    //   { family: 'fz2', file: '某某字体.otf' },
+    // ];
+
+    // ===== 2) 动态注入 @font-face =====
+    const styleEl = document.createElement('style');
+    document.head.appendChild(styleEl);
+    styleEl.textContent = fonts.map(f => `
+      @font-face {
+        font-family: ${f.family};
+        src: url("${f.file}");
+        font-display: swap;
+      }
+    `).join('\n');
+
+    // ===== 3) 渲染卡片 =====
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const textInput = document.getElementById('textInput');
+    const searchInput = document.getElementById('searchInput');
+
+    function render(list) {
+      grid.innerHTML = '';
+      if (!list.length) {
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      const frag = document.createDocumentFragment();
+      list.forEach((f, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = f.file;
+
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = '复制名称';
+        btn.onclick = () => {
+          navigator.clipboard.writeText(f.file);
+          btn.textContent = '已复制';
+          setTimeout(() => btn.textContent = '复制名称', 1200);
+        };
+
+        meta.appendChild(name);
+        meta.appendChild(btn);
+
+        const preview = document.createElement('div');
+        preview.className = 'preview';
+        preview.style.fontFamily = f.family;
+        preview.textContent = textInput.value;
+
+        card.appendChild(meta);
+        card.appendChild(preview);
+        frag.appendChild(card);
+      });
+      grid.appendChild(frag);
+    }
+
+    // 初始渲染
+    render(fonts);
+
+    // ===== 4) 输入联动 =====
+    textInput.addEventListener('input', () => {
+      const val = textInput.value;
+      document.querySelectorAll('.preview').forEach(el => el.textContent = val);
+      // 同步到URL（可分享）
+      const url = new URL(location.href);
+      url.searchParams.set('text', val);
+      history.replaceState(null, '', url);
+    });
+
+    // ===== 5) 搜索过滤 =====
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase();
+      const list = fonts.filter(f => f.file.toLowerCase().includes(q));
+      render(list);
+      // 重新应用当前文本
+      const val = textInput.value;
+      document.querySelectorAll('.preview').forEach(el => el.textContent = val);
+    });
+
+    // ===== 6) 读取分享参数 =====
+    const params = new URLSearchParams(location.search);
+    const sharedText = params.get('text');
+    if (sharedText) {
+      textInput.value = sharedText;
+      document.querySelectorAll('.preview').forEach(el => el.textContent = sharedText);
+    }
+  </script>
+</body>
+</html>
