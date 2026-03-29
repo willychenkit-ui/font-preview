@@ -41,19 +41,18 @@
   </div>
 
   <script>
-    // ===== 1) 在这里配置你的字体 =====
-    // 方式A：规则命名（推荐）
-    const TOTAL = 50; // 改成你的数量，例如 123
-    const fonts = Array.from({ length: TOTAL }, (_, i) => ({
-      family: `font${i + 1}`,
-      file: `font${i + 1}.ttf`
-    }));
-
-    // 方式B：自定义列表（如果不是规则命名，取消上面，改用下面）
-    // const fonts = [
-    //   { family: 'fz1', file: '方正XX.ttf' },
-    //   { family: 'fz2', file: '某某字体.otf' },
-    // ];
+   const fonts = [
+  { family: "fz1", file: "FZBSJW.TTF" },
+  { family: "fz2", file: "FZBWKSFW.TTF" },
+  { family: "fz3", file: "FZBWKSJW.TTF" },
+  { family: "fz4", file: "FZCCHFW.TTF" },
+  { family: "fz5", file: "FZCCHJW.TTF" },
+  { family: "fz6", file: "FZCHYFW.TTF" },
+  { family: "fz7", file: "FZCHYJW.TTF" },
+  { family: "fz8", file: "FZCQFW.TTF" },
+  { family: "fz9", file: "FZCQJW.TTF" },
+  { family: "fz10", file: "FZCSFW.TTF" }
+];
 
     // ===== 2) 动态注入 @font-face =====
     const styleEl = document.createElement('style');
