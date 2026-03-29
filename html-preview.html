@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>字体预览库</title>
+
+<style>
+body {
+  font-family: Arial;
+  padding: 40px;
+}
+
+textarea {
+  width: 100%;
+  height: 80px;
+  font-size: 20px;
+  margin-bottom: 30px;
+}
+
+.font-block {
+  margin-bottom: 40px;
+}
+
+.font-name {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.preview {
+  font-size: 36px;
+  border: 1px solid #eee;
+  padding: 20px;
+}
+
+/* 👇 替换成你的字体 */
+@font-face {
+  font-family: font1;
+  src: url("你的字体1.ttf");
+}
+
+@font-face {
+  font-family: font2;
+  src: url("你的字体2.ttf");
+}
+
+.font1 { font-family: font1; }
+.font2 { font-family: font2; }
+
+</style>
+</head>
+
+<body>
+
+<h2>字体预览库</h2>
+
+<textarea id="inputText">请输入你要预览的文字</textarea>
+
+<div class="font-block">
+  <div class="font-name">字体1</div>
+  <div class="preview font1"></div>
+</div>
+
+<div class="font-block">
+  <div class="font-name">字体2</div>
+  <div class="preview font2"></div>
+</div>
+
+<script>
+const input = document.getElementById("inputText");
+const previews = document.querySelectorAll(".preview");
+
+function updateText() {
+  previews.forEach(p => p.innerText = input.value);
+}
+
+input.addEventListener("input", updateText);
+updateText();
+</script>
+
+</body>
+</html>
