@@ -1,82 +1,59 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<title>字体预览库</title>
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
-<style>
-body {
-  font-family: Arial;
-  padding: 40px;
+export default function FontLibraryApp() {
+  const [text, setText] = useState("输入你想预览的文字");
+
+  // 自动生成字体列表（1~50，可自行改）
+  const fonts = Array.from({ length: 50 }, (_, i) => ({
+    name: `font${i + 1}`,
+    file: `font${i + 1}.ttf`
+  }));
+
+  return (
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">字体预览库</h1>
+
+      {/* 输入框 */}
+      <Input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className="text-lg"
+      />
+
+      {/* 字体展示 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {fonts.map((font, index) => (
+          <Card key={index} className="shadow rounded-2xl">
+            <CardContent className="p-4 space-y-2">
+              <div className="text-sm text-gray-500">{font.file}</div>
+              <div
+                style={{
+                  fontFamily: font.name,
+                  fontSize: "28px"
+                }}
+              >
+                {text}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* 动态注入字体 */}
+      <style>
+        {fonts
+          .map(
+            (font) => `
+          @font-face {
+            font-family: ${font.name};
+            src: url(${font.file});
+          }
+        `
+          )
+          .join("\n")}
+      </style>
+    </div>
+  );
 }
-
-textarea {
-  width: 100%;
-  height: 80px;
-  font-size: 20px;
-  margin-bottom: 30px;
-}
-
-.font-block {
-  margin-bottom: 40px;
-}
-
-.font-name {
-  font-size: 14px;
-  color: #888;
-  margin-bottom: 10px;
-}
-
-.preview {
-  font-size: 36px;
-  border: 1px solid #eee;
-  padding: 20px;
-}
-
-/* 👇 替换成你的字体 */
-@font-face {
-  font-family: font1;
-  src: url("./FZBSJW.TTF");
-}
-
-@font-face {
-  font-family: font2;
-  src: url("./FZBWKSFW.TTF");
-}
-
-.font1 { font-family: font1; }
-.font2 { font-family: font2; }
-
-</style>
-</head>
-
-<body>
-
-<h2>字体预览库</h2>
-
-<textarea id="inputText">请输入你要预览的文字</textarea>
-
-<div class="font-block">
-  <div class="font-name">方正报宋简体</div>
-  <div class="preview font1"></div>
-</div>
-
-<div class="font-block">
-  <div class="font-name">方正北魏楷书繁体</div>
-  <div class="preview font2"></div>
-</div>
-
-<script>
-const input = document.getElementById("inputText");
-const previews = document.querySelectorAll(".preview");
-
-function updateText() {
-  previews.forEach(p => p.innerText = input.value);
-}
-
-input.addEventListener("input", updateText);
-updateText();
-</script>
-
-</body>
-</html>
