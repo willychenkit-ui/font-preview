@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>字体列表生成</title>
+</head>
+<body>
+  <input type="file" id="files" webkitdirectory multiple>
+  <pre id="output"></pre>
+
+  <script>
+    document.getElementById("files").addEventListener("change", function(e) {
+      const files = Array.from(e.target.files);
+      const ttfFiles = files.filter(f => f.name.toLowerCase().endsWith(".ttf"));
+
+      const result = ttfFiles.map((f, i) => {
+        return `{ family: "font${i+1}", file: "fonts/${f.name}" }`;
+      });
+
+      document.getElementById("output").textContent = result.join(",\n");
+    });
+  </script>
+</body>
+</html>
