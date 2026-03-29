@@ -1,0 +1,410 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>字体预览库（高级版）</title>
+  <style>
+    :root { --bg:#0f1220; --card:#171a2b; --text:#e7e9ff; --muted:#9aa0c3; --border:#2a2f4a; }
+    * { box-sizing: border-box; }
+    body { margin:0; background: radial-gradient(1200px 800px at 20% -10%, #1b2040, #0f1220); color:var(--text); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial; }
+    .container { max-width:1400px; margin:0 auto; padding:20px; }
+    h1 { margin:0 0 12px; font-size:24px; }
+    .toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .input, .search { background:#0c0f1d; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:12px; outline:none; }
+    .input { flex:1; min-width:240px; font-size:16px; }
+    .search { width:220px; }
+    .hint { color:var(--muted); font-size:12px; }
+    .grid { display:grid; grid-template-columns: repeat(1, 1fr); gap:12px; margin-top:16px; }
+    @media (min-width:640px){ .grid{ grid-template-columns: repeat(2, 1fr);} }
+    @media (min-width:1024px){ .grid{ grid-template-columns: repeat(3, 1fr);} }
+    .card { background: linear-gradient(180deg, #171a2b, #141733); border:1px solid var(--border); border-radius:18px; padding:14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .name { color:var(--muted); font-size:12px; }
+    .btn { cursor:pointer; border:1px solid var(--border); background:#0c0f1d; color:var(--text); border-radius:10px; padding:6px 10px; font-size:12px; }
+    .btn:hover { background:#11153a; }
+    .btn.small { padding:4px 8px; font-size:11px; }
+    .preview { font-size:28px; line-height:1.4; word-break: break-word; }
+    .empty { color:var(--muted); text-align:center; padding:40px 0; }
+    .layout { display:grid; grid-template-columns: 220px 1fr; gap:16px; }
+    .sidebar { background: linear-gradient(180deg, #171a2b, #141733); border:1px solid var(--border); border-radius:18px; padding:14px; height: fit-content; position: sticky; top: 16px; }
+    .side-title { font-size:13px; color:var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+    .side-actions { display:flex; gap:8px; margin:10px 0 6px; }
+    .folder-list { display:flex; flex-direction:column; gap:8px; }
+    .folder-item { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); }
+    .folder-item input { accent-color: #6c7bff; }
+    @media (max-width:900px){
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="side-title">Folders</div>
+        <div class="side-actions">
+          <button id="foldersAll" class="btn small" type="button">All</button>
+          <button id="foldersNone" class="btn small" type="button">None</button>
+        </div>
+        <div class="folder-list" id="folderList">
+          <label class="folder-item"><input type="checkbox" data-folder="FZ-12" checked>FZ-12</label>
+          <label class="folder-item"><input type="checkbox" data-folder="FZ-123" checked>FZ-123</label>
+          <label class="folder-item"><input type="checkbox" data-folder="HY-16" checked>HY-16</label>
+          <label class="folder-item"><input type="checkbox" data-folder="HY-20" checked>HY-20</label>
+          <label class="folder-item"><input type="checkbox" data-folder="HG" checked>HG</label>
+          <label class="folder-item"><input type="checkbox" data-folder="LX" checked>LX</label>
+          <label class="folder-item"><input type="checkbox" data-folder="MN" checked>MN</label>
+          <label class="folder-item"><input type="checkbox" data-folder="YS" checked>YS</label>
+          <label class="folder-item"><input type="checkbox" data-folder="YGY" checked>YGY</label>
+          <label class="folder-item"><input type="checkbox" data-folder="BX" checked>BX</label>
+        </div>
+      </aside>
+      <main>
+        <h1>字体预览库（高级版）</h1>
+        <div class="toolbar">
+          <input id="textInput" class="input" value="输入你想预览的文字" />
+          <input id="searchInput" class="search" placeholder="搜索字体文件名" />
+        </div>
+        <div class="hint">提示：将字体文件（.ttf/.otf/.woff2）与本文件放在同一目录，并按规则命名，例如 font1.ttf ~ font123.ttf</div>
+
+        <div id="grid" class="grid"></div>
+        <div id="empty" class="empty" style="display:none;">没有匹配的字体</div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+   const fonts = [ 
+  { family: "FZLTCHFW", file: "FZ-12/FZLTCHFW.TTF" },
+  { family: "FZLTCHJW", file: "FZ-12/FZLTCHJW.TTF" },
+  { family: "FZLTHFW", file: "FZ-12/FZLTHFW.TTF" },
+  { family: "FZLTHJW", file: "FZ-12/FZLTHJW.TTF" },
+  { family: "FZLTTHFW", file: "FZ-12/FZLTTHFW.TTF" },
+  { family: "FZLTTHJW", file: "FZ-12/FZLTTHJW.TTF" },
+  { family: "FZLTXHFW", file: "FZ-12/FZLTXHFW.TTF" },
+  { family: "FZLTXHJW", file: "FZ-12/FZLTXHJW.TTF" },
+  { family: "FZLTZHUNHFW", file: "FZ-12/FZLTZHUNHFW.TTF" },
+  { family: "FZLTZHUNHJW", file: "FZ-12/FZLTZHUNHJW.TTF" },
+  { family: "FZQINGKBYSJF", file: "FZ-12/FZQINGKBYSJF.TTF" },
+  { family: "FZQKBYSJW", file: "FZ-12/FZQKBYSJW.TTF" },
+  { family: "FZBSJW", file: "FZ-123/FZBSJW.TTF" },
+  { family: "FZBWKSFW", file: "FZ-123/FZBWKSFW.TTF" },
+  { family: "FZBWKSJW", file: "FZ-123/FZBWKSJW.TTF" },
+  { family: "FZCCHFW", file: "FZ-123/FZCCHFW.TTF" },
+  { family: "FZCCHJW", file: "FZ-123/FZCCHJW.TTF" },
+  { family: "FZCHYFW", file: "FZ-123/FZCHYFW.TTF" },
+  { family: "FZCHYJW", file: "FZ-123/FZCHYJW.TTF" },
+  { family: "FZCQFW", file: "FZ-123/FZCQFW.TTF" },
+  { family: "FZCQJW", file: "FZ-123/FZCQJW.TTF" },
+  { family: "FZCSFW", file: "FZ-123/FZCSFW.TTF" },
+  { family: "FZCSJW", file: "FZ-123/FZCSJW.TTF" },
+  { family: "FZCYFW", file: "FZ-123/FZCYFW.TTF" },
+  { family: "FZCYJW", file: "FZ-123/FZCYJW.TTF" },
+  { family: "FZDBSFW", file: "FZ-123/FZDBSFW.TTF" },
+  { family: "FZDBSJW", file: "FZ-123/FZDBSJW.TTF" },
+  { family: "FZDHTFW", file: "FZ-123/FZDHTFW.TTF" },
+  { family: "FZDHTJW", file: "FZ-123/FZDHTJW.TTF" },
+  { family: "FZFSFW", file: "FZ-123/FZFSFW.TTF" },
+  { family: "FZFSJW", file: "FZ-123/FZFSJW.TTF" },
+  { family: "FZGLFW", file: "FZ-123/FZGLFW.TTF" },
+  { family: "FZGLJW", file: "FZ-123/FZGLJW.TTF" },
+  { family: "FZH4FW", file: "FZ-123/FZH4FW.TTF" },
+  { family: "FZHCJW", file: "FZ-123/FZHCJW.TTF" },
+  { family: "FZHLFW", file: "FZ-123/FZHLFW.TTF" },
+  { family: "FZHLJW", file: "FZ-123/FZHLJW.TTF" },
+  { family: "FZHPFW", file: "FZ-123/FZHPFW.TTF" },
+  { family: "FZHPJW", file: "FZ-123/FZHPJW.TTF" },
+  { family: "FZHTFW", file: "FZ-123/FZHTFW.TTF" },
+  { family: "FZHTJW", file: "FZ-123/FZHTJW.TTF" },
+  { family: "FZJZFW", file: "FZ-123/FZJZFW.TTF" },
+  { family: "FZJZJW", file: "FZ-123/FZJZJW.TTF" },
+  { family: "FZKANGFW", file: "FZ-123/FZKANGFW.TTF" },
+  { family: "FZKANGJW", file: "FZ-123/FZKANGJW.TTF" },
+  { family: "FZKATFW", file: "FZ-123/FZKATFW.TTF" },
+  { family: "FZKATJW", file: "FZ-123/FZKATJW.TTF" },
+  { family: "FZKTFW", file: "FZ-123/FZKTFW.TTF" },
+  { family: "FZKTJW", file: "FZ-123/FZKTJW.TTF" },
+  { family: "FZL2FW", file: "FZ-123/FZL2FW.TTF" },
+  { family: "FZL2JW", file: "FZ-123/FZL2JW.TTF" },
+  { family: "FZLBFW", file: "FZ-123/FZLBFW.TTF" },
+  { family: "FZLBJW", file: "FZ-123/FZLBJW.TTF" },
+  { family: "FZLSFW", file: "FZ-123/FZLSFW.TTF" },
+  { family: "FZLSJW", file: "FZ-123/FZLSJW.TTF" },
+  { family: "FZLXTFW", file: "FZ-123/FZLXTFW.TTF" },
+  { family: "FZLXTJW", file: "FZ-123/FZLXTJW.TTF" },
+  { family: "FZMHFW", file: "FZ-123/FZMHFW.TTF" },
+  { family: "FZMHJW", file: "FZ-123/FZMHJW.TTF" },
+  { family: "FZNBSJW", file: "FZ-123/FZNBSJW.TTF" },
+  { family: "FZNSTFW", file: "FZ-123/FZNSTFW.TTF" },
+  { family: "FZNSTJW", file: "FZ-123/FZNSTJW.TTF" },
+  { family: "FZPHFW", file: "FZ-123/FZPHFW.TTF" },
+  { family: "FZPHTFW", file: "FZ-123/FZPHTFW.TTF" },
+  { family: "FZPHTJW", file: "FZ-123/FZPHTJW.TTF" },
+  { family: "FZPTYJW", file: "FZ-123/FZPTYJW.TTF" },
+  { family: "FZPWFW", file: "FZ-123/FZPWFW.TTF" },
+  { family: "FZPWJW", file: "FZ-123/FZPWJW.TTF" },
+  { family: "FZQTFW", file: "FZ-123/FZQTFW.TTF" },
+  { family: "FZQTJW", file: "FZ-123/FZQTJW.TTF" },
+  { family: "FZS3JW", file: "FZ-123/FZS3JW.TTF" },
+  { family: "FZSEFW", file: "FZ-123/FZSEFW.TTF" },
+  { family: "FZSEJW", file: "FZ-123/FZSEJW.TTF" },
+  { family: "FZSHFW", file: "FZ-123/FZSHFW.TTF" },
+  { family: "FZSHHFW", file: "FZ-123/FZSHHFW.TTF" },
+  { family: "FZSHHJW", file: "FZ-123/FZSHHJW.TTF" },
+  { family: "FZSHJW", file: "FZ-123/FZSHJW.TTF" },
+  { family: "FZSJSFW", file: "FZ-123/FZSJSFW.TTF" },
+  { family: "FZSJSJW", file: "FZ-123/FZSJSJW.TTF" },
+  { family: "FZSSFW", file: "FZ-123/FZSSFW.TTF" },
+  { family: "FZSSJW", file: "FZ-123/FZSSJW.TTF" },
+  { family: "FZSTFW", file: "FZ-123/FZSTFW.TTF" },
+  { family: "FZSTJW", file: "FZ-123/FZSTJW.TTF" },
+  { family: "FZSYFW", file: "FZ-123/FZSYFW.TTF" },
+  { family: "FZSYJW", file: "FZ-123/FZSYJW.TTF" },
+  { family: "FZSZFW", file: "FZ-123/FZSZFW.TTF" },
+  { family: "FZSZJW", file: "FZ-123/FZSZJW.TTF" },
+  { family: "FZTJLSFW", file: "FZ-123/FZTJLSFW.TTF" },
+  { family: "FZTJLSJW", file: "FZ-123/FZTJLSJW.TTF" },
+  { family: "FZWBFW", file: "FZ-123/FZWBFW.TTF" },
+  { family: "FZWBJW", file: "FZ-123/FZWBJW.TTF" },
+  { family: "FZXBSFW", file: "FZ-123/FZXBSFW.TTF" },
+  { family: "FZXBSJW", file: "FZ-123/FZXBSJW.TTF" },
+  { family: "FZXDXJW", file: "FZ-123/FZXDXJW.TTF" },
+  { family: "FZXH1FW", file: "FZ-123/FZXH1FW.TTF" },
+  { family: "FZXH1JW", file: "FZ-123/FZXH1JW.TTF" },
+  { family: "FZXIANGLFW", file: "FZ-123/FZXIANGLFW.TTF" },
+  { family: "FZXIANGLJW", file: "FZ-123/FZXIANGLJW.TTF" },
+  { family: "FZXKFW", file: "FZ-123/FZXKFW.TTF" },
+  { family: "FZXKJW", file: "FZ-123/FZXKJW.TTF" },
+  { family: "FZXLFW", file: "FZ-123/FZXLFW.TTF" },
+  { family: "FZXQFW", file: "FZ-123/FZXQFW.TTF" },
+  { family: "FZXQJW", file: "FZ-123/FZXQJW.TTF" },
+  { family: "FZXSHFW", file: "FZ-123/FZXSHFW.TTF" },
+  { family: "FZXSHJW", file: "FZ-123/FZXSHJW.TTF" },
+  { family: "FZXSSFW", file: "FZ-123/FZXSSFW.TTF" },
+  { family: "FZXXLFW", file: "FZ-123/FZXXLFW.TTF" },
+  { family: "FZXZTFW", file: "FZ-123/FZXZTFW.TTF" },
+  { family: "FZY1FW", file: "FZ-123/FZY1FW.TTF" },
+  { family: "FZY1JW", file: "FZ-123/FZY1JW.TTF" },
+  { family: "FZY3FW", file: "FZ-123/FZY3FW.TTF" },
+  { family: "FZY3JW", file: "FZ-123/FZY3JW.TTF" },
+  { family: "FZY4FW", file: "FZ-123/FZY4FW.TTF" },
+  { family: "FZY4JW", file: "FZ-123/FZY4JW.TTF" },
+  { family: "FZYBKSFW", file: "FZ-123/FZYBKSFW.TTF" },
+  { family: "FZYBKSJW", file: "FZ-123/FZYBKSJW.TTF" },
+  { family: "FZYBXSFW", file: "FZ-123/FZYBXSFW.TTF" },
+  { family: "FZYBXSJW", file: "FZ-123/FZYBXSJW.TTF" },
+  { family: "FZYHFW", file: "FZ-123/FZYHFW.TTF" },
+  { family: "FZYHJW", file: "FZ-123/FZYHJW.TTF" },
+  { family: "FZYTFW", file: "FZ-123/FZYTFW.TTF" },
+  { family: "FZYTJW", file: "FZ-123/FZYTJW.TTF" },
+  { family: "FZYXFW", file: "FZ-123/FZYXFW.TTF" },
+  { family: "FZYXJW", file: "FZ-123/FZYXJW.TTF" },
+  { family: "FZZBHFW", file: "FZ-123/FZZBHFW.TTF" },
+  { family: "FZZBHJW", file: "FZ-123/FZZBHJW.TTF" },
+  { family: "FZZDXFW", file: "FZ-123/FZZDXFW.TTF" },
+  { family: "FZZDXJW", file: "FZ-123/FZZDXJW.TTF" },
+  { family: "FZZHYFW", file: "FZ-123/FZZHYFW.TTF" },
+  { family: "FZZHYJW", file: "FZ-123/FZZHYJW.TTF" },
+  { family: "FZZKFW", file: "FZ-123/FZZKFW.TTF" },
+  { family: "FZZQFW", file: "FZ-123/FZZQFW.TTF" },
+  { family: "FZZQJW", file: "FZ-123/FZZQJW.TTF" },
+  { family: "FZZYFW", file: "FZ-123/FZZYFW.TTF" },
+  { family: "FZZYJW", file: "FZ-123/FZZYJW.TTF" },
+  { family: "HYDaHeiF", file: "HY-16/HYDaHeiF.ttf" },
+  { family: "HYDaHeiJ", file: "HY-16/HYDaHeiJ.ttf" },
+  { family: "HYXiDengXianF", file: "HY-16/HYXiDengXianF.ttf" },
+  { family: "HYXiDengXianJ", file: "HY-16/HYXiDengXianJ.ttf" },
+  { family: "HYZhongDengXianF", file: "HY-16/HYZhongDengXianF.ttf" },
+  { family: "HYZhongDengXianJ", file: "HY-16/HYZhongDengXianJ.ttf" },
+  { family: "HYZhongHeiF", file: "HY-16/HYZhongHeiF.ttf" },
+  { family: "HYZhongHeiJ", file: "HY-16/HYZhongHeiJ.ttf" },
+  { family: "mb1b5m", file: "HY-16/mb1b5m.ttf" },
+  { family: "mb1bjm", file: "HY-16/mb1bjm.ttf" },
+  { family: "mb2b5m", file: "HY-16/mb2b5m.ttf" },
+  { family: "mb2bjm", file: "HY-16/mb2bjm.ttf" },
+  { family: "mg1b5m", file: "HY-16/mg1b5m.ttf" },
+  { family: "mg1bjm", file: "HY-16/mg1bjm.ttf" },
+  { family: "mg2b5m", file: "HY-16/mg2b5m.ttf" },
+  { family: "mg2bjm", file: "HY-16/mg2bjm.ttf" },
+  { family: "Elgatino", file: "HY-20/Elgatino.ttf" },
+  { family: "HYChangSongJ", file: "HY-20/HYChangSongJ.ttf" },
+  { family: "HYCuHeiF", file: "HY-20/HYCuHeiF.ttf" },
+  { family: "HYCuSongJ", file: "HY-20/HYCuSongJ.ttf" },
+  { family: "HYDaSongJ", file: "HY-20/HYDaSongJ.ttf" },
+  { family: "HYDieYuTiJ", file: "HY-20/HYDieYuTiJ.ttf" },
+  { family: "HYKaiTiJ", file: "HY-20/HYKaiTiJ.ttf" },
+  { family: "HYQinChuanFeiYingJ", file: "HY-20/HYQinChuanFeiYingJ.ttf" },
+  { family: "HYQingKongTiJ", file: "HY-20/HYQingKongTiJ.ttf" },
+  { family: "HYShangWeiShouShuJ", file: "HY-20/HYShangWeiShouShuJ.ttf" },
+  { family: "HYXiaoBoMeiYanTiJ", file: "HY-20/HYXiaoBoMeiYanTiJ.ttf" },
+  { family: "HYXiaoMaiTiJ", file: "HY-20/HYXiaoMaiTiJ.ttf" },
+  { family: "HYXingKaiJ", file: "HY-20/HYXingKaiJ.ttf" },
+  { family: "HYXinRenWenSong55J", file: "HY-20/HYXinRenWenSong55J.ttf" },
+  { family: "HYXueJunTiJ", file: "HY-20/HYXueJunTiJ.ttf" },
+  { family: "HYZhongSongJ", file: "HY-20/HYZhongSongJ.ttf" },
+  { family: "HYZhongYuanJ", file: "HY-20/HYZhongYuanJ.ttf" },
+  { family: "HYZongYiTiJ", file: "HY-20/HYZongYiTiJ.ttf" },
+  { family: "Rayna", file: "HY-20/Rayna.ttf" },
+  { family: "SentyTEA", file: "HY-20/SentyTEA.ttf" },
+  { family: "HG_UKK_TZA3", file: "HG/HG_UKK_TZA3.ttf" },
+  { family: "鏉庢棴绉戜功娉?", file: "LX/鏉庢棴绉戜功娉?ttf" },
+  { family: "FrutigerLTPro-Bold", file: "MN/FrutigerLTPro-Bold.ttf" },
+  { family: "FrutigerLTPro-Light", file: "MN/FrutigerLTPro-Light.ttf" },
+  { family: "FrutigerLTPro-Roman", file: "MN/FrutigerLTPro-Roman.ttf" },
+  { family: "婕旂ず姹夋σι瀹?", file: "YS/婕旂ず姹夋σι瀹?ttf" },
+  { family: "婕旂ず娴佷簯妤?", file: "YS/婕旂ず娴佷簯妤?ttf" },
+  { family: "婕旂ず瀹佺己浣?", file: "YS/婕旂ず瀹佺己浣?ttf" },
+  { family: "婕旂ず灏戝勾琛?", file: "YS/婕旂ず灏戝勾琛?ttf" },
+  { family: "婕旂ず闀囬瓊琛屾سی", file: "YS/婕旂ず闀囬瓊琛屾سی.woff2" },
+  { family: "鍙舄牴鍙嬬晠琛屼功", file: "YGY/鍙舄牴鍙s琛屼功.ttf" },
+  { family: "鍙舄牴鍙嬪垁閿嬮粦鑽?8", file: "YGY/鍙舄牴鍙嬪垁閿嬮粦鑽?8.ttf" },
+  { family: "鍙舄牴鍙嬖度榛?", file: "YGY/鍙舄牴鍙嬖度榛?ttf" },
+  { family: "鍙舄牴鍙嬮潤闊典綋", file: "YGY/鍙舄牴鍙嬮潤闊典綋.ttf" },
+  { family: "鍙舄牴鍙s蹇冪畝浣?8", file: "YGY/鍙舄牴鍙s蹇冪畝浣?8.ttf" },
+  { family: "鍙舄牴鍙s微粗体", file: "YGY/鍙舄牴鍙s微粗体.ttf" },
+  { family: "鍙舄牴鍙s微黑简", file: "YGY/鍙舄牴鍙s微黑简.ttf" },
+  { family: "鍙舄牴鍙s微宋特黑?", file: "YGY/鍙舄牴鍙s微宋特黑?.ttf" },
+  { family: "鍙舄牴鍙s微彩体", file: "YGY/鍙舄牴鍙s微彩体.ttf" },
+  { family: "鍙舄牴鍙s新特宋", file: "YGY/鍙舄牴鍙s新特宋.ttf" },
+  { family: "鍙舄牴鍙s元纰?", file: "YGY/鍙舄牴鍙s元纰?ttf" },
+  { family: "BXMYHFont-Regular", file: "BX/BXMYHFont-Regular.ttf" }
+];
+
+    // ===== 2) 动态注入 @font-face =====
+    const styleEl = document.createElement('style');
+    document.head.appendChild(styleEl);
+    styleEl.textContent = fonts.map(f => `
+      @font-face {
+        font-family: ${f.family};
+        src: url("${f.file}");
+        font-display: swap;
+      }
+    `).join('\n');
+
+    // ===== 3) 渲染卡片 =====
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const textInput = document.getElementById('textInput');
+    const searchInput = document.getElementById('searchInput');
+    const foldersAllBtn = document.getElementById('foldersAll');
+    const foldersNoneBtn = document.getElementById('foldersNone');
+    const folderList = document.getElementById('folderList');
+    const folderChecks = Array.from(folderList.querySelectorAll('input[data-folder]'));
+    const selectedFolders = new Set(folderChecks.filter(c => c.checked).map(c => c.dataset.folder));
+
+    function getFolder(file) {
+      const idx = file.indexOf('/');
+      return idx === -1 ? '' : file.slice(0, idx);
+    }
+
+    function render(list) {
+      grid.innerHTML = '';
+      if (!list.length) {
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      const frag = document.createDocumentFragment();
+      list.forEach((f) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = f.file;
+
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = '复制名称';
+        btn.onclick = () => {
+          navigator.clipboard.writeText(f.file);
+          btn.textContent = '已复制';
+          setTimeout(() => btn.textContent = '复制名称', 1200);
+        };
+
+        meta.appendChild(name);
+        meta.appendChild(btn);
+
+        const preview = document.createElement('div');
+        preview.className = 'preview';
+        preview.style.fontFamily = f.family;
+        preview.textContent = textInput.value;
+
+        card.appendChild(meta);
+        card.appendChild(preview);
+        frag.appendChild(card);
+      });
+      grid.appendChild(frag);
+    }
+
+    function applyFilters() {
+      const q = searchInput.value.toLowerCase();
+      const list = fonts.filter(f => {
+        const folder = getFolder(f.file);
+        const inFolder = selectedFolders.has(folder);
+        const inSearch = f.file.toLowerCase().includes(q);
+        return inFolder && inSearch;
+      });
+      render(list);
+      const val = textInput.value;
+      document.querySelectorAll('.preview').forEach(el => el.textContent = val);
+    }
+
+    // 初始渲染
+    applyFilters();
+
+    // ===== 4) 输入联动 =====
+    textInput.addEventListener('input', () => {
+      const val = textInput.value;
+      document.querySelectorAll('.preview').forEach(el => el.textContent = val);
+      // 同步到 URL（可分享）
+      const url = new URL(location.href);
+      url.searchParams.set('text', val);
+      history.replaceState(null, '', url);
+    });
+
+    // ===== 5) 搜索过滤 =====
+    searchInput.addEventListener('input', () => {
+      applyFilters();
+    });
+
+    folderChecks.forEach(chk => {
+      chk.addEventListener('change', () => {
+        if (chk.checked) selectedFolders.add(chk.dataset.folder);
+        else selectedFolders.delete(chk.dataset.folder);
+        applyFilters();
+      });
+    });
+
+    foldersAllBtn.addEventListener('click', () => {
+      folderChecks.forEach(chk => {
+        chk.checked = true;
+        selectedFolders.add(chk.dataset.folder);
+      });
+      applyFilters();
+    });
+
+    foldersNoneBtn.addEventListener('click', () => {
+      folderChecks.forEach(chk => {
+        chk.checked = false;
+      });
+      selectedFolders.clear();
+      applyFilters();
+    });
+
+    // ===== 6) 读取分享参数 =====
+    const params = new URLSearchParams(location.search);
+    const sharedText = params.get('text');
+    if (sharedText) {
+      textInput.value = sharedText;
+      document.querySelectorAll('.preview').forEach(el => el.textContent = sharedText);
+    }
+  </script>
+</body>
+</html>
