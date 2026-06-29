@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -20,7 +20,9 @@
     @media (min-width:1024px){ .grid{ grid-template-columns: repeat(3, 1fr);} }
     .card { background: linear-gradient(180deg, #171a2b, #141733); border:1px solid var(--border); border-radius:18px; padding:14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
     .meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-    .name { color:var(--muted); font-size:12px; }
+    .name { color:var(--muted); font-size:12px; display:flex; flex-direction:column; gap:2px; }
+    .cn-name { color:var(--text); font-size:14px; }
+    .file-name { color:var(--muted); }
     .btn { cursor:pointer; border:1px solid var(--border); background:#0c0f1d; color:var(--text); border-radius:10px; padding:6px 10px; font-size:12px; }
     .btn:hover { background:#11153a; }
     .btn.small { padding:4px 8px; font-size:11px; }
@@ -65,7 +67,7 @@
         <h1>无限极字体预览库</h1>
         <div class="toolbar">
           <input id="textInput" class="input" value="输入你想预览的文字" />
-          <input id="searchInput" class="search" placeholder="搜索字体文件名" />
+          <input id="searchInput" class="search" placeholder="搜索字体中文名/文件名" />
         </div>
         <div class="hint">提示：如字体无法加载显示，请打开vpn</div>
 
@@ -272,6 +274,195 @@
   { family: "BXMYHFont-Regular", file: "BX/BXMYHFont-Regular.ttf" }
 ];
 
+    const fontCnNameMap = {
+      FZLTCHFW: '方正兰亭粗黑繁体',
+      FZLTCHJW: '方正兰亭粗黑简体',
+      FZLTHFW: '方正兰亭黑繁体',
+      FZLTHJW: '方正兰亭黑简体',
+      FZLTTHFW: '方正兰亭特黑繁体',
+      FZLTTHJW: '方正兰亭特黑简体',
+      FZLTXHFW: '方正兰亭细黑繁体',
+      FZLTXHJW: '方正兰亭细黑简体',
+      FZLTZHUNHFW: '方正兰亭准黑繁体',
+      FZLTZHUNHJW: '方正兰亭准黑简体',
+      FZQINGKBYSJF: '方正清刻本悦宋简繁',
+      FZQKBYSJW: '方正清刻本悦宋简体',
+      FZBSJW: '方正报宋简体',
+      FZBWKSFW: '方正北魏楷书繁体',
+      FZBWKSJW: '方正北魏楷书简体',
+      FZCCHFW: '方正超粗黑繁体',
+      FZCCHJW: '方正超粗黑简体',
+      FZCHYFW: '方正粗活意繁体',
+      FZCHYJW: '方正粗活意简体',
+      FZCQFW: '方正粗倩繁体',
+      FZCQJW: '方正粗倩简体',
+      FZCSFW: '方正粗宋繁体',
+      FZCSJW: '方正粗宋简体',
+      FZCYFW: '方正彩云繁体',
+      FZCYJW: '方正彩云简体',
+      FZDBSFW: '方正大标宋繁体',
+      FZDBSJW: '方正大标宋简体',
+      FZDHTFW: '方正大黑繁体',
+      FZDHTJW: '方正大黑简体',
+      FZFSFW: '方正仿宋繁体',
+      FZFSJW: '方正仿宋简体',
+      FZGLFW: '方正古隶繁体',
+      FZGLJW: '方正古隶简体',
+      FZH4FW: '方正粗黑繁体',
+      FZHCJW: '方正黄草简体',
+      FZHLFW: '方正华隶繁体',
+      FZHLJW: '方正华隶简体',
+      FZHPFW: '方正琥珀繁体',
+      FZHPJW: '方正琥珀简体',
+      FZHPJW: '方正琥珀简体',
+      FZHPJW: '方正琥珀简体',
+      FZHTFW: '方正黑体繁体',
+      FZHTJW: '方正黑体简体',
+      FZJZFW: '方正剪纸繁体',
+      FZJZJW: '方正剪纸简体',
+      FZKANGFW: '方正康体繁体',
+      FZKANGJW: '方正剪纸简体',
+      FZKATFW: '方正卡通繁体',
+      FZKATJW: '方正卡通简体',
+      FZKTFW: '方正楷体繁体',
+      FZKTJW: '方正楷体简体',
+      FZL2FW: '方正隶二繁体',
+      FZL2JW: '方正隶二简体',
+      FZLBFW: '方正隶变繁体',
+      FZLBJW: '方正隶变简体',
+      FZLSFW: '方正隶书繁体',
+      FZLSJW: '方正隶书简体',
+      FZLXTFW: '方正流行体繁体',
+      FZLXTJW: '方正流行体简体',
+      FZMHFW: '方正美黑繁体',
+      FZMHJW: '方正美黑简体',
+      FZNBSJW: '方正新报宋简体',
+      FZNSTFW: '方正新舒体繁体',
+      FZNSTJW: '方正新舒体简体',
+      FZPHFW: '方正平黑繁体',
+      FZPHTFW: '方正平和繁体',
+      FZPHTJW: '方正平和简体',
+      FZPTYJW: '方正胖头鱼简体',
+      FZPWFW: '方正胖娃繁体',
+      FZPWJW: '方正胖娃简体',
+      FZQTFW: '方正姚体繁体',
+      FZQTJW: '方正启体简体',
+      FZS3JW: '方正宋三简体',
+      FZSEFW: '方正少儿繁体',
+      FZSEJW: '方正少儿简体',
+      FZSHFW: '方正宋黑繁体',
+      FZSHHFW: '方正水黑繁体',
+      FZSHHJW: '方正水黑简体',
+      FZSHJW: '方正宋黑简体',
+      FZSJSFW: '方正瘦金书繁体',
+      FZSJSJW: '方正瘦金书简体',
+      FZSSFW: '方正书宋繁体',
+      FZSSJW: '方正书宋简体',
+      FZSTFW: '方正舒体繁体',
+      FZSTJW: '方正舒体简体',
+      FZSYFW: '方正宋一繁体',
+      FZSYJW: '方正宋一简体',
+      FZSZFW: '方正水柱繁体',
+      FZSZJW: '方正水柱简体',
+      FZTJLSFW: '方正铁筋隶书繁体',
+      FZTJLSJW: '方正铁筋隶书简体',
+      FZWBFW: '方正魏碑繁体',
+      FZWBJW: '方正魏碑简体',
+      FZXBSFW: '方正小标宋繁体',
+      FZXBSJW: '方正小标宋简体',
+      FZXDXJW: '方正细等线简体',
+      FZXH1FW: '方正细黑一繁体',
+      FZXH1JW: '方正细黑一简体',
+      FZXIANGLFW: '方正祥隶繁体',
+      FZXIANGLJW: '方正祥隶简体',
+      FZXKFW: '方正行楷繁体',
+      FZXKJW: '方正行楷简体',
+      FZXLFW: '方正报宋繁体',
+      FZXQFW: '方正细倩繁体',
+      FZXSHFW: '方正细珊瑚繁体',
+      FZXSHJW: '方正细珊瑚简体',
+      FZXSSFW: '方正新书宋繁体',
+      FZXXLFW: '方正新秀丽繁体',
+      FZXZTFW: '方正小篆体',
+      FZY1FW: '方正细圆繁体',
+      FZY1JW: '方正细圆简体',
+      FZY3FW: '方正准圆繁体',
+      FZY3JW: '方正准圆简体',
+      FZY4FW: '方正粗圆繁体',
+      FZY4JW: '方正粗圆简体',
+      FZYBKSFW: '方正硬笔楷书繁体',
+      FZYBKSJW: '方正硬笔楷书简体',
+      FZYBXSFW: '方正行笔楷书繁体',
+      FZYBXSJW: '方正行笔楷书简体',
+      FZYHFW: '方正艺黑繁体',
+      FZYHJW: '方正艺黑简体',
+      FZYTFW: '方正姚体繁体',
+      FZYTJW: '方正姚体简体',
+      FZYXFW: '方正幼线繁体',
+      FZYXJW: '方正幼线简体',
+      FZZBHFW: '方正毡笔黑繁体',
+      FZZBHJW: '方正毡笔黑简体',
+      FZZDXFW: '方正中等线繁体',
+      FZZDXJW: '方正中等线简体',
+      FZZHYFW: '方正稚艺简体',
+      FZZHYJW: '方正稚艺简体',
+      FZZKFW: '方正中楷繁体',
+      FZZQFW: '方正中倩繁体',
+      FZZQJW: '方正中倩简体',
+      FZZYFW: '方正综艺繁体',
+      FZZYJW: '方正综艺简体',
+      HYDaHeiF: '汉仪大黑繁体',
+      HYDaHeiJ: '汉仪大黑简体',
+      HYXiDengXianF: '汉仪细等线繁体',
+      HYXiDengXianJ: '汉仪细等线简体',
+      HYZhongDengXianF: '汉仪中等线繁体',
+      HYZhongDengXianJ: '汉仪中等线简体',
+      HYZhongHeiF: '汉仪中黑繁体',
+      HYZhongHeiJ: '汉仪中黑简体',
+      mb1b5m: '汉仪中黑B5',
+      mb1bjm: '汉仪中黑BJ',
+      mb2b5m: '汉仪大黑B5',
+      mb2bjm: '汉仪大黑BJ',
+      mg1b5m: '汉仪细等线B5',
+      mg1bjm: '汉仪细等线BJ',
+      mg2b5m: '汉仪中等线B5',
+      mg2bjm: '汉仪中等线BJ',
+      HYChangSongJ: '汉仪长宋简体',
+      HYCuHeiF: '汉仪粗黑繁体',
+      HYCuSongJ: '汉仪粗宋简体',
+      HYDaSongJ: '汉仪大宋简体',
+      HYDieYuTiJ: '汉仪蝶语体简体',
+      HYKaiTiJ: '汉仪楷体简体',
+      HYQinChuanFeiYingJ: '汉仪秦川飞影简体',
+      HYQingKongTiJ: '汉仪晴空体简体',
+      HYShangWeiShouShuJ: '汉仪尚巍手书简体',
+      HYXiaoBoMeiYanTiJ: '汉仪小波美颜体简体',
+      HYXiaoMaiTiJ: '汉仪小麦体简体',
+      HYXingKaiJ: '汉仪行楷简体',
+      HYXinRenWenSong55J: '汉仪新人文宋55简体',
+      HYXueJunTiJ: '汉仪学军体简体',
+      HYZhongSongJ: '汉仪中宋简体',
+      HYZhongYuanJ: '汉仪中圆简体',
+      HYZongYiTiJ: '汉仪综艺体简体',
+      'BXMYHFont-Regular': '波西米亚狂想黑'
+    };
+
+    function getFileBaseName(file) {
+      return file.split('/').pop().replace(/\.[^.]+$/, '').trim();
+    }
+
+    function getFontCnName(f) {
+      const baseName = getFileBaseName(f.file);
+      if (/[\u4e00-\u9fff]/.test(f.family)) return f.family.trim();
+      if (/[\u4e00-\u9fff]/.test(baseName)) return baseName;
+      return fontCnNameMap[f.family] || fontCnNameMap[baseName] || '';
+    }
+
+    fonts.forEach((font) => {
+      font.cnName = getFontCnName(font);
+      font.searchText = [font.cnName, font.family, font.file].join(' ').toLowerCase();
+    });
+
     // ===== 2) 按需注入 @font-face（勾选才加载） =====
     const styleEl = document.createElement('style');
     document.head.appendChild(styleEl);
@@ -322,7 +513,16 @@
 
         const name = document.createElement('div');
         name.className = 'name';
-        name.textContent = f.file;
+        const cnName = document.createElement('span');
+        cnName.className = 'cn-name';
+        cnName.textContent = f.cnName || f.family;
+
+        const fileName = document.createElement('span');
+        fileName.className = 'file-name';
+        fileName.textContent = f.file;
+
+        name.appendChild(cnName);
+        name.appendChild(fileName);
 
         const btn = document.createElement('button');
         btn.className = 'btn';
@@ -353,7 +553,7 @@
       const list = fonts.filter(f => {
         const folder = getFolder(f.file);
         const inFolder = selectedFolders.has(folder);
-        const inSearch = f.file.toLowerCase().includes(q);
+        const inSearch = f.searchText.includes(q);
         return inFolder && inSearch;
       });
       list.forEach(ensureFontLoaded);
