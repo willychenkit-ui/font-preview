@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>字体预览系统 Pro Max</title>
+<title>Font System Pro Max Debug</title>
 
 <style>
 :root{
@@ -21,14 +21,20 @@ body{
   font-family:Arial;
 }
 
-.container{max-width:1400px;margin:0 auto;padding:20px;}
+/* ===== 主体 ===== */
+.container{
+  max-width:1400px;
+  margin:0 auto;
+  padding:20px;
+}
 
 .layout{
   display:grid;
-  grid-template-columns:220px 1fr;
+  grid-template-columns:240px 1fr;
   gap:16px;
 }
 
+/* ===== sidebar ===== */
 .sidebar{
   background:var(--card);
   border:1px solid var(--border);
@@ -46,7 +52,7 @@ button{
   padding:6px 10px;
   border-radius:8px;
   cursor:pointer;
-  margin-right:6px;
+  margin:4px 4px 4px 0;
 }
 
 .folder-item{
@@ -56,6 +62,7 @@ button{
   font-size:13px;
 }
 
+/* ===== main ===== */
 .toolbar{
   display:flex;
   gap:10px;
@@ -88,35 +95,60 @@ input{
   margin-top:10px;
 }
 
-.title{
-  font-size:14px;
-  font-weight:600;
+.title{font-size:14px;font-weight:600;}
+.file{font-size:12px;color:var(--muted);}
+
+/* ===== DEBUG PANEL ===== */
+#debugPanel{
+  position:fixed;
+  right:0;
+  top:0;
+  width:340px;
+  height:100vh;
+  background:#0b0e1a;
+  border-left:1px solid #2a2f4a;
+  overflow:auto;
+  padding:10px;
+  z-index:9999;
 }
 
-.file{
-  font-size:12px;
-  color:var(--muted);
+.debug-item{
+  border:1px solid #2a2f4a;
+  border-radius:8px;
+  padding:8px;
+  margin:6px 0;
+  cursor:pointer;
 }
+
+.small{font-size:12px;color:#9aa0c3;}
 </style>
 </head>
 
 <body>
+
+<!-- ================= DEBUG PANEL ================= -->
+<div id="debugPanel">
+  <h3>Font Debug Panel</h3>
+  <button onclick="runDebug()">Scan Fonts</button>
+  <button onclick="clearDebug()">Clear</button>
+  <div id="debugList"></div>
+</div>
+
+<!-- ================= MAIN ================= -->
 <div class="container">
 <div class="layout">
 
-<!-- 左侧 -->
+<!-- sidebar -->
 <aside class="sidebar">
-
 <h4>Folders</h4>
 
 <button onclick="selectAll()">All</button>
 <button onclick="selectNone()">None</button>
 
 <div id="folderList"></div>
-
 </aside>
 
-<!-- 主体 -->
+<!-- main -->
 <main>
 
 <div class="toolbar">
@@ -134,7 +166,7 @@ input{
 <script>
 
 /* =========================
-   1. 字体数据
+   FONT DATA
 ========================= */
 
 const fonts = [
@@ -335,7 +367,7 @@ const fonts = [
 ];
 
 /* =========================
-   2. 中文名
+   CN NAME
 ========================= */
 
 const cnMap = {
@@ -511,15 +543,14 @@ const cnMap = {
       'BXMYHFont-Regular': '波西米亚狂想黑'
 };
 
-const getCn = f => cnMap[f.family] || f.family;
+const getCn=f=>cnMap[f.family]||f.family;
 
 /* =========================
-   3. CDN + FontFace
+   CDN + FONT LOADER
 ========================= */
 
-const CDN = "https://cdn.jsdelivr.net/gh/willychenkit-ui/font-preview@main/";
-
-const loaded = new Set();
+const CDN="https://cdn.jsdelivr.net/gh/willychenkit-ui/font-preview@main/";
+const loaded=new Set();
 
 function url(file){
   const p=file.split("/");
@@ -539,19 +570,15 @@ async function loadFont(f){
 }
 
 /* =========================
-   4. folders（默认 FZ-12）
+   FOLDERS
 ========================= */
 
 const folders=[...new Set(fonts.map(f=>f.file.split("/")[0]))];
 
-// 默认：只选 FZ-12
+// 默认只选 FZ-12
 const selected=new Set(["FZ-12"]);
 
 const folderList=document.getElementById("folderList");
-
-/* =========================
-   5. All / None
-========================= */
 
 function selectAll(){
   selected.clear();
@@ -566,14 +593,9 @@ function selectNone(){
   apply();
 }
 
-/* =========================
-   6. folder UI
-========================= */
-
 function syncUI(){
-  document.querySelectorAll(".folderCB").forEach(cb=>{
-    const f=cb.dataset.folder;
-    cb.checked=selected.has(f);
+  document.querySelectorAll(".cb").forEach(cb=>{
+    cb.checked=selected.has(cb.dataset.f);
   });
 }
 
@@ -583,8 +605,8 @@ folders.forEach(f=>{
 
   const cb=document.createElement("input");
   cb.type="checkbox";
-  cb.className="folderCB";
-  cb.dataset.folder=f;
+  cb.className="cb";
+  cb.dataset.f=f;
   cb.checked=selected.has(f);
 
   cb.onchange=()=>{
@@ -599,7 +621,7 @@ folders.forEach(f=>{
 });
 
 /* =========================
-   7. filter
+   FILTER + RENDER
 ========================= */
 
 function filter(){
@@ -612,10 +634,6 @@ function filter(){
   });
 }
 
-/* =========================
-   8. render
-========================= */
-
 function render(list){
   const grid=document.getElementById("grid");
   grid.innerHTML="";
@@ -625,7 +643,6 @@ function render(list){
   const frag=document.createDocumentFragment();
 
   list.forEach(f=>{
-
     const card=document.createElement("div");
     card.className="card";
 
@@ -654,16 +671,80 @@ function render(list){
   grid.appendChild(frag);
 }
 
-/* =========================
-   9. main
-========================= */
-
 function apply(){
   render(filter());
 }
 
 /* =========================
-   10. events
+   FONT DEBUG ENGINE
+========================= */
+
+const FontDebug={
+
+  measure(text,font){
+    const c=document.createElement("canvas");
+    const ctx=c.getContext("2d");
+    ctx.font=`40px ${font}`;
+    return ctx.measureText(text).width;
+  },
+
+  isFallback(font){
+    const base=this.measure("中文ABC123","sans-serif");
+    const test=this.measure("中文ABC123",`"${font}",sans-serif`);
+    return Math.abs(base-test)<0.5;
+  },
+
+  inspect(name){
+    const inDoc=[...document.fonts].some(f=>f.family===name);
+
+    const result={
+      font:name,
+      inDocumentFonts:inDoc,
+      fallback:this.isFallback(name),
+      loaded:document.fonts.check(`40px "${name}"`)
+    };
+
+    result.status=
+      !inDoc?"❌ NOT LOADED":
+      result.fallback?"🟡 FALLBACK":
+      "🟢 OK";
+
+    return result;
+  }
+};
+
+/* =========================
+   DEBUG UI
+========================= */
+
+function runDebug(){
+  const box=document.getElementById("debugList");
+  box.innerHTML="";
+
+  fonts.forEach(f=>{
+    const r=FontDebug.inspect(f.family);
+
+    const div=document.createElement("div");
+    div.className="debug-item";
+
+    div.innerHTML=`
+      <b>${f.family}</b><br/>
+      <span class="small">${getCn(f)}</span><br/>
+      <span>${r.status}</span>
+    `;
+
+    div.onclick=()=>alert(JSON.stringify(r,null,2));
+
+    box.appendChild(div);
+  });
+}
+
+function clearDebug(){
+  document.getElementById("debugList").innerHTML="";
+}
+
+/* =========================
+   EVENTS
 ========================= */
 
 document.getElementById("searchInput").oninput=apply;
@@ -675,11 +756,12 @@ document.getElementById("textInput").oninput=()=>{
 };
 
 /* =========================
-   11. init
+   INIT
 ========================= */
 
 apply();
 
 </script>
+
 </body>
 </html>
