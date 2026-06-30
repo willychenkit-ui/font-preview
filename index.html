@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>字体预览系统 Pro Max</title>
+
+<style>
+:root{
+  --bg:#0f1220;
+  --card:#171a2b;
+  --text:#e7e9ff;
+  --muted:#9aa0c3;
+  --border:#2a2f4a;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial;
+}
+
+.container{max-width:1400px;margin:0 auto;padding:20px;}
+
+.layout{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:16px;
+}
+
+.sidebar{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:12px;
+  border-radius:14px;
+  height:fit-content;
+  position:sticky;
+  top:10px;
+}
+
+button{
+  background:#0c0f1d;
+  color:var(--text);
+  border:1px solid var(--border);
+  padding:6px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  margin-right:6px;
+}
+
+.folder-item{
+  display:flex;
+  gap:6px;
+  margin:6px 0;
+  font-size:13px;
+}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+input{
+  background:#0c0f1d;
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:8px;
+  border-radius:10px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:12px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:12px;
+  border-radius:14px;
+}
+
+.preview{
+  font-size:26px;
+  margin-top:10px;
+}
+
+.title{
+  font-size:14px;
+  font-weight:600;
+}
+
+.file{
+  font-size:12px;
+  color:var(--muted);
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<div class="layout">
+
+<!-- 左侧 -->
+<aside class="sidebar">
+
+<h4>Folders</h4>
+
+<button onclick="selectAll()">All</button>
+<button onclick="selectNone()">None</button>
+
+<div id="folderList"></div>
+
+</aside>
+
+<!-- 主体 -->
+<main>
+
+<div class="toolbar">
+  <input id="textInput" value="输入预览文字" style="flex:1"/>
+  <input id="searchInput" placeholder="搜索字体..." />
+</div>
+
+<div id="grid" class="grid"></div>
+
+</main>
+
+</div>
+</div>
+
+<script>
+
+/* =========================
+   1. 字体数据
+========================= */
+
+const fonts = [
+  { family: "FZLTCHFW", file: "FZ-12/FZLTCHFW.woff2" },
+  { family: "FZLTCHJW", file: "FZ-12/FZLTCHJW.woff2" },
+  { family: "FZLTHFW", file: "FZ-12/FZLTHFW.woff2" },
+  { family: "FZLTHJW", file: "FZ-12/FZLTHJW.woff2" },
+  { family: "FZLTTHFW", file: "FZ-12/FZLTTHFW.woff2" },
+  { family: "FZLTTHJW", file: "FZ-12/FZLTTHJW.woff2" },
+  { family: "FZLTXHFW", file: "FZ-12/FZLTXHFW.woff2" },
+  { family: "FZLTXHJW", file: "FZ-12/FZLTXHJW.woff2" },
+  { family: "FZLTZHUNHFW", file: "FZ-12/FZLTZHUNHFW.woff2" },
+  { family: "FZLTZHUNHJW", file: "FZ-12/FZLTZHUNHJW.woff2" },
+  { family: "FZQINGKBYSJF", file: "FZ-12/FZQINGKBYSJF.woff2" },
+  { family: "FZQKBYSJW", file: "FZ-12/FZQKBYSJW.woff2" },
+  { family: "FZBSJW", file: "FZ-123/FZBSJW.woff2" },
+  { family: "FZBWKSFW", file: "FZ-123/FZBWKSFW.woff2" },
+  { family: "FZBWKSJW", file: "FZ-123/FZBWKSJW.woff2" },
+  { family: "FZCCHFW", file: "FZ-123/FZCCHFW.woff2" },
+  { family: "FZCCHJW", file: "FZ-123/FZCCHJW.woff2" },
+  { family: "FZCHYFW", file: "FZ-123/FZCHYFW.woff2" },
+  { family: "FZCHYJW", file: "FZ-123/FZCHYJW.woff2" },
+  { family: "FZCQFW", file: "FZ-123/FZCQFW.woff2" },
+  { family: "FZCQJW", file: "FZ-123/FZCQJW.woff2" },
+  { family: "FZCSFW", file: "FZ-123/FZCSFW.woff2" },
+  { family: "FZCSJW", file: "FZ-123/FZCSJW.woff2" },
+  { family: "FZCYFW", file: "FZ-123/FZCYFW.woff2" },
+  { family: "FZCYJW", file: "FZ-123/FZCYJW.woff2" },
+  { family: "FZDBSFW", file: "FZ-123/FZDBSFW.woff2" },
+  { family: "FZDBSJW", file: "FZ-123/FZDBSJW.woff2" },
+  { family: "FZDHTFW", file: "FZ-123/FZDHTFW.woff2" },
+  { family: "FZDHTJW", file: "FZ-123/FZDHTJW.woff2" },
+  { family: "FZFSFW", file: "FZ-123/FZFSFW.woff2" },
+  { family: "FZFSJW", file: "FZ-123/FZFSJW.woff2" },
+  { family: "FZGLFW", file: "FZ-123/FZGLFW.woff2" },
+  { family: "FZGLJW", file: "FZ-123/FZGLJW.woff2" },
+  { family: "FZH4FW", file: "FZ-123/FZH4FW.woff2" },
+  { family: "FZHCJW", file: "FZ-123/FZHCJW.woff2" },
+  { family: "FZHLFW", file: "FZ-123/FZHLFW.woff2" },
+  { family: "FZHLJW", file: "FZ-123/FZHLJW.woff2" },
+  { family: "FZHPFW", file: "FZ-123/FZHPFW.woff2" },
+  { family: "FZHPJW", file: "FZ-123/FZHPJW.woff2" },
+  { family: "FZHTFW", file: "FZ-123/FZHTFW.woff2" },
+  { family: "FZHTJW", file: "FZ-123/FZHTJW.woff2" },
+  { family: "FZJZFW", file: "FZ-123/FZJZFW.woff2" },
+  { family: "FZJZJW", file: "FZ-123/FZJZJW.woff2" },
+  { family: "FZKANGFW", file: "FZ-123/FZKANGFW.woff2" },
+  { family: "FZKANGJW", file: "FZ-123/FZKANGJW.woff2" },
+  { family: "FZKATFW", file: "FZ-123/FZKATFW.woff2" },
+  { family: "FZKATJW", file: "FZ-123/FZKATJW.woff2" },
+  { family: "FZKTFW", file: "FZ-123/FZKTFW.woff2" },
+  { family: "FZKTJW", file: "FZ-123/FZKTJW.woff2" },
+  { family: "FZL2FW", file: "FZ-123/FZL2FW.woff2" },
+  { family: "FZL2JW", file: "FZ-123/FZL2JW.woff2" },
+  { family: "FZLBFW", file: "FZ-123/FZLBFW.woff2" },
+  { family: "FZLBJW", file: "FZ-123/FZLBJW.woff2" },
+  { family: "FZLSFW", file: "FZ-123/FZLSFW.woff2" },
+  { family: "FZLSJW", file: "FZ-123/FZLSJW.woff2" },
+  { family: "FZLXTFW", file: "FZ-123/FZLXTFW.woff2" },
+  { family: "FZLXTJW", file: "FZ-123/FZLXTJW.woff2" },
+  { family: "FZMHFW", file: "FZ-123/FZMHFW.woff2" },
+  { family: "FZMHJW", file: "FZ-123/FZMHJW.woff2" },
+  { family: "FZNBSJW", file: "FZ-123/FZNBSJW.woff2" },
+  { family: "FZNSTFW", file: "FZ-123/FZNSTFW.woff2" },
+  { family: "FZNSTJW", file: "FZ-123/FZNSTJW.woff2" },
+  { family: "FZPHFW", file: "FZ-123/FZPHFW.woff2" },
+  { family: "FZPHTFW", file: "FZ-123/FZPHTFW.woff2" },
+  { family: "FZPHTJW", file: "FZ-123/FZPHTJW.woff2" },
+  { family: "FZPTYJW", file: "FZ-123/FZPTYJW.woff2" },
+  { family: "FZPWFW", file: "FZ-123/FZPWFW.woff2" },
+  { family: "FZPWJW", file: "FZ-123/FZPWJW.woff2" },
+  { family: "FZQTFW", file: "FZ-123/FZQTFW.woff2" },
+  { family: "FZQTJW", file: "FZ-123/FZQTJW.woff2" },
+  { family: "FZS3JW", file: "FZ-123/FZS3JW.woff2" },
+  { family: "FZSEFW", file: "FZ-123/FZSEFW.woff2" },
+  { family: "FZSEJW", file: "FZ-123/FZSEJW.woff2" },
+  { family: "FZSHFW", file: "FZ-123/FZSHFW.woff2" },
+  { family: "FZSHHFW", file: "FZ-123/FZSHHFW.woff2" },
+  { family: "FZSHHJW", file: "FZ-123/FZSHHJW.woff2" },
+  { family: "FZSHJW", file: "FZ-123/FZSHJW.woff2" },
+  { family: "FZSJSFW", file: "FZ-123/FZSJSFW.woff2" },
+  { family: "FZSJSJW", file: "FZ-123/FZSJSJW.woff2" },
+  { family: "FZSSFW", file: "FZ-123/FZSSFW.woff2" },
+  { family: "FZSSJW", file: "FZ-123/FZSSJW.woff2" },
+  { family: "FZSTFW", file: "FZ-123/FZSTFW.woff2" },
+  { family: "FZSTJW", file: "FZ-123/FZSTJW.woff2" },
+  { family: "FZSYFW", file: "FZ-123/FZSYFW.woff2" },
+  { family: "FZSYJW", file: "FZ-123/FZSYJW.woff2" },
+  { family: "FZSZFW", file: "FZ-123/FZSZFW.woff2" },
+  { family: "FZSZJW", file: "FZ-123/FZSZJW.woff2" },
+  { family: "FZTJLSFW", file: "FZ-123/FZTJLSFW.woff2" },
+  { family: "FZTJLSJW", file: "FZ-123/FZTJLSJW.woff2" },
+  { family: "FZWBFW", file: "FZ-123/FZWBFW.woff2" },
+  { family: "FZWBJW", file: "FZ-123/FZWBJW.woff2" },
+  { family: "FZXBSFW", file: "FZ-123/FZXBSFW.woff2" },
+  { family: "FZXBSJW", file: "FZ-123/FZXBSJW.woff2" },
+  { family: "FZXDXJW", file: "FZ-123/FZXDXJW.woff2" },
+  { family: "FZXH1FW", file: "FZ-123/FZXH1FW.woff2" },
+  { family: "FZXH1JW", file: "FZ-123/FZXH1JW.woff2" },
+  { family: "FZXIANGLFW", file: "FZ-123/FZXIANGLFW.woff2" },
+  { family: "FZXIANGLJW", file: "FZ-123/FZXIANGLJW.woff2" },
+  { family: "FZXKFW", file: "FZ-123/FZXKFW.woff2" },
+  { family: "FZXKJW", file: "FZ-123/FZXKJW.woff2" },
+  { family: "FZXLFW", file: "FZ-123/FZXLFW.woff2" },
+  { family: "FZXQFW", file: "FZ-123/FZXQFW.woff2" },
+  { family: "FZXQJW", file: "FZ-123/FZXQJW.woff2" },
+  { family: "FZXSHFW", file: "FZ-123/FZXSHFW.woff2" },
+  { family: "FZXSHJW", file: "FZ-123/FZXSHJW.woff2" },
+  { family: "FZXSSFW", file: "FZ-123/FZXSSFW.woff2" },
+  { family: "FZXXLFW", file: "FZ-123/FZXXLFW.woff2" },
+  { family: "FZXZTFW", file: "FZ-123/FZXZTFW.woff2" },
+  { family: "FZY1FW", file: "FZ-123/FZY1FW.woff2" },
+  { family: "FZY1JW", file: "FZ-123/FZY1JW.woff2" },
+  { family: "FZY3FW", file: "FZ-123/FZY3FW.woff2" },
+  { family: "FZY3JW", file: "FZ-123/FZY3JW.woff2" },
+  { family: "FZY4FW", file: "FZ-123/FZY4FW.woff2" },
+  { family: "FZY4JW", file: "FZ-123/FZY4JW.woff2" },
+  { family: "FZYBKSFW", file: "FZ-123/FZYBKSFW.woff2" },
+  { family: "FZYBKSJW", file: "FZ-123/FZYBKSJW.woff2" },
+  { family: "FZYBXSFW", file: "FZ-123/FZYBXSFW.woff2" },
+  { family: "FZYBXSJW", file: "FZ-123/FZYBXSJW.woff2" },
+  { family: "FZYHFW", file: "FZ-123/FZYHFW.woff2" },
+  { family: "FZYHJW", file: "FZ-123/FZYHJW.woff2" },
+  { family: "FZYTFW", file: "FZ-123/FZYTFW.woff2" },
+  { family: "FZYTJW", file: "FZ-123/FZYTJW.woff2" },
+  { family: "FZYXFW", file: "FZ-123/FZYXFW.woff2" },
+  { family: "FZYXJW", file: "FZ-123/FZYXJW.woff2" },
+  { family: "FZZBHFW", file: "FZ-123/FZZBHFW.woff2" },
+  { family: "FZZBHJW", file: "FZ-123/FZZBHJW.woff2" },
+  { family: "FZZDXFW", file: "FZ-123/FZZDXFW.woff2" },
+  { family: "FZZDXJW", file: "FZ-123/FZZDXJW.woff2" },
+  { family: "FZZHYFW", file: "FZ-123/FZZHYFW.woff2" },
+  { family: "FZZHYJW", file: "FZ-123/FZZHYJW.woff2" },
+  { family: "FZZKFW", file: "FZ-123/FZZKFW.woff2" },
+  { family: "FZZQFW", file: "FZ-123/FZZQFW.woff2" },
+  { family: "FZZQJW", file: "FZ-123/FZZQJW.woff2" },
+  { family: "FZZYFW", file: "FZ-123/FZZYFW.woff2" },
+  { family: "FZZYJW", file: "FZ-123/FZZYJW.woff2" },
+  { family: "HYDaHeiF", file: "HY-16/HYDaHeiF.woff2" },
+  { family: "HYDaHeiJ", file: "HY-16/HYDaHeiJ.woff2" },
+  { family: "HYXiDengXianF", file: "HY-16/HYXiDengXianF.woff2" },
+  { family: "HYXiDengXianJ", file: "HY-16/HYXiDengXianJ.woff2" },
+  { family: "HYZhongDengXianF", file: "HY-16/HYZhongDengXianF.woff2" },
+  { family: "HYZhongDengXianJ", file: "HY-16/HYZhongDengXianJ.woff2" },
+  { family: "HYZhongHeiF", file: "HY-16/HYZhongHeiF.woff2" },
+  { family: "HYZhongHeiJ", file: "HY-16/HYZhongHeiJ.woff2" },
+  { family: "mb1b5m", file: "HY-16/mb1b5m.woff2" },
+  { family: "mb1bjm", file: "HY-16/mb1bjm.woff2" },
+  { family: "mb2b5m", file: "HY-16/mb2b5m.woff2" },
+  { family: "mb2bjm", file: "HY-16/mb2bjm.woff2" },
+  { family: "mg1b5m", file: "HY-16/mg1b5m.woff2" },
+  { family: "mg1bjm", file: "HY-16/mg1bjm.woff2" },
+  { family: "mg2b5m", file: "HY-16/mg2b5m.woff2" },
+  { family: "mg2bjm", file: "HY-16/mg2bjm.woff2" },
+  { family: "Elgatino", file: "HY-20/Elgatino.woff2" },
+  { family: "HYChangSongJ", file: "HY-20/HYChangSongJ.woff2" },
+  { family: "HYCuHeiF", file: "HY-20/HYCuHeiF.woff2" },
+  { family: "HYCuSongJ", file: "HY-20/HYCuSongJ.woff2" },
+  { family: "HYDaSongJ", file: "HY-20/HYDaSongJ.woff2" },
+  { family: "HYDieYuTiJ", file: "HY-20/HYDieYuTiJ.woff2" },
+  { family: "HYKaiTiJ", file: "HY-20/HYKaiTiJ.woff2" },
+  { family: "HYQinChuanFeiYingJ", file: "HY-20/HYQinChuanFeiYingJ.woff2" },
+  { family: "HYQingKongTiJ", file: "HY-20/HYQingKongTiJ.woff2" },
+  { family: "HYShangWeiShouShuJ", file: "HY-20/HYShangWeiShouShuJ.woff2" },
+  { family: "HYXiaoBoMeiYanTiJ", file: "HY-20/HYXiaoBoMeiYanTiJ.woff2" },
+  { family: "HYXiaoMaiTiJ", file: "HY-20/HYXiaoMaiTiJ.woff2" },
+  { family: "HYXingKaiJ", file: "HY-20/HYXingKaiJ.woff2" },
+  { family: "HYXinRenWenSong55J", file: "HY-20/HYXinRenWenSong55J.woff2" },
+  { family: "HYXueJunTiJ", file: "HY-20/HYXueJunTiJ.woff2" },
+  { family: "HYZhongSongJ", file: "HY-20/HYZhongSongJ.woff2" },
+  { family: "HYZhongYuanJ", file: "HY-20/HYZhongYuanJ.woff2" },
+  { family: "HYZongYiTiJ", file: "HY-20/HYZongYiTiJ.woff2" },
+  { family: "Rayna", file: "HY-20/Rayna.woff2" },
+  { family: "SentyTEA", file: "HY-20/SentyTEA.woff2" },
+  { family: "HG_UKK_TZA3", file: "HG/HG_UKK_TZA3.woff2" },
+  { family: "李旭科书法", file: "LX/李旭科书法.woff2" },
+  { family: "FrutigerLTPro-Bold", file: "MN/FrutigerLTPro-Bold.woff2" },
+  { family: "FrutigerLTPro-Light", file: "MN/FrutigerLTPro-Light.woff2" },
+  { family: "FrutigerLTPro-Roman", file: "MN/FrutigerLTPro-Roman.woff2" },
+  { family: "演示汉楷宋", file: "YS/演示汉楷宋.woff2" },
+  { family: "演示流云楷", file: "YS/演示流云楷.woff2" },
+  { family: "演示宁缺体", file: "YS/演示宁缺体.woff2" },
+  { family: "演示少年行", file: "YS/演示少年行.woff2" },
+  { family: "演示新手书", file: "YS/演示新手书.woff2" },
+  { family: "演示镇魂行楷", file: "YS/演示镇魂行楷.woff2" },
+  { family: "叶根友畅行书", file: "YGY/叶根友畅行书.woff2" },
+  { family: "叶根友刀锋黑草08", file: "YGY/叶根友刀锋黑草08.woff2" },
+  { family: "叶根友度黑", file: "YGY/叶根友度黑.woff2" },
+  { family: "叶根友静韵体", file: "YGY/叶根友静韵体.woff2" },
+  { family: "叶根友空心简体08", file: "YGY/叶根友空心简体08.woff2" },
+  { family: "叶根友微刚体", file: "YGY/叶根友微刚体.woff2" },
+  { family: "叶根友微黑简", file: "YGY/叶根友微黑简.woff2" },
+  { family: "叶根友微宋特黑 ", file: "YGY/叶根友微宋特黑 .woff2" },
+  { family: "叶根友微影体", file: "YGY/叶根友微影体.woff2" },
+  { family: "叶根友新特宋", file: "YGY/叶根友新特宋.woff2" },
+  { family: "叶根友元碑", file: "YGY/叶根友元碑.woff2" },
+  { family: "BXMYHFont-Regular", file: "BX/BXMYHFont-Regular.woff2" }
+];
+
+/* =========================
+   2. 中文名
+========================= */
+
+const cnMap = {
+      FZLTCHFW: '方正兰亭粗黑繁体',
+      FZLTCHJW: '方正兰亭粗黑简体',
+      FZLTHFW: '方正兰亭黑繁体',
+      FZLTHJW: '方正兰亭黑简体',
+      FZLTTHFW: '方正兰亭特黑繁体',
+      FZLTTHJW: '方正兰亭特黑简体',
+      FZLTXHFW: '方正兰亭细黑繁体',
+      FZLTXHJW: '方正兰亭细黑简体',
+      FZLTZHUNHFW: '方正兰亭准黑繁体',
+      FZLTZHUNHJW: '方正兰亭准黑简体',
+      FZQINGKBYSJF: '方正清刻本悦宋简繁',
+      FZQKBYSJW: '方正清刻本悦宋简体',
+      FZBSJW: '方正报宋简体',
+      FZBWKSFW: '方正北魏楷书繁体',
+      FZBWKSJW: '方正北魏楷书简体',
+      FZCCHFW: '方正超粗黑繁体',
+      FZCCHJW: '方正超粗黑简体',
+      FZCHYFW: '方正粗活意繁体',
+      FZCHYJW: '方正粗活意简体',
+      FZCQFW: '方正粗倩繁体',
+      FZCQJW: '方正粗倩简体',
+      FZCSFW: '方正粗宋繁体',
+      FZCSJW: '方正粗宋简体',
+      FZCYFW: '方正彩云繁体',
+      FZCYJW: '方正彩云简体',
+      FZDBSFW: '方正大标宋繁体',
+      FZDBSJW: '方正大标宋简体',
+      FZDHTFW: '方正大黑繁体',
+      FZDHTJW: '方正大黑简体',
+      FZFSFW: '方正仿宋繁体',
+      FZFSJW: '方正仿宋简体',
+      FZGLFW: '方正古隶繁体',
+      FZGLJW: '方正古隶简体',
+      FZH4FW: '方正粗黑繁体',
+      FZHCJW: '方正黄草简体',
+      FZHLFW: '方正华隶繁体',
+      FZHLJW: '方正华隶简体',
+      FZHPFW: '方正琥珀繁体',
+      FZHPJW: '方正琥珀简体',
+      FZHPJW: '方正琥珀简体',
+      FZHPJW: '方正琥珀简体',
+      FZHTFW: '方正黑体繁体',
+      FZHTJW: '方正黑体简体',
+      FZJZFW: '方正剪纸繁体',
+      FZJZJW: '方正剪纸简体',
+      FZKANGFW: '方正康体繁体',
+      FZKANGJW: '方正剪纸简体',
+      FZKATFW: '方正卡通繁体',
+      FZKATJW: '方正卡通简体',
+      FZKTFW: '方正楷体繁体',
+      FZKTJW: '方正楷体简体',
+      FZL2FW: '方正隶二繁体',
+      FZL2JW: '方正隶二简体',
+      FZLBFW: '方正隶变繁体',
+      FZLBJW: '方正隶变简体',
+      FZLSFW: '方正隶书繁体',
+      FZLSJW: '方正隶书简体',
+      FZLXTFW: '方正流行体繁体',
+      FZLXTJW: '方正流行体简体',
+      FZMHFW: '方正美黑繁体',
+      FZMHJW: '方正美黑简体',
+      FZNBSJW: '方正新报宋简体',
+      FZNSTFW: '方正新舒体繁体',
+      FZNSTJW: '方正新舒体简体',
+      FZPHFW: '方正平黑繁体',
+      FZPHTFW: '方正平和繁体',
+      FZPHTJW: '方正平和简体',
+      FZPTYJW: '方正胖头鱼简体',
+      FZPWFW: '方正胖娃繁体',
+      FZPWJW: '方正胖娃简体',
+      FZQTFW: '方正姚体繁体',
+      FZQTJW: '方正启体简体',
+      FZS3JW: '方正宋三简体',
+      FZSEFW: '方正少儿繁体',
+      FZSEJW: '方正少儿简体',
+      FZSHFW: '方正宋黑繁体',
+      FZSHHFW: '方正水黑繁体',
+      FZSHHJW: '方正水黑简体',
+      FZSHJW: '方正宋黑简体',
+      FZSJSFW: '方正瘦金书繁体',
+      FZSJSJW: '方正瘦金书简体',
+      FZSSFW: '方正书宋繁体',
+      FZSSJW: '方正书宋简体',
+      FZSTFW: '方正舒体繁体',
+      FZSTJW: '方正舒体简体',
+      FZSYFW: '方正宋一繁体',
+      FZSYJW: '方正宋一简体',
+      FZSZFW: '方正水柱繁体',
+      FZSZJW: '方正水柱简体',
+      FZTJLSFW: '方正铁筋隶书繁体',
+      FZTJLSJW: '方正铁筋隶书简体',
+      FZWBFW: '方正魏碑繁体',
+      FZWBJW: '方正魏碑简体',
+      FZXBSFW: '方正小标宋繁体',
+      FZXBSJW: '方正小标宋简体',
+      FZXDXJW: '方正细等线简体',
+      FZXH1FW: '方正细黑一繁体',
+      FZXH1JW: '方正细黑一简体',
+      FZXIANGLFW: '方正祥隶繁体',
+      FZXIANGLJW: '方正祥隶简体',
+      FZXKFW: '方正行楷繁体',
+      FZXKJW: '方正行楷简体',
+      FZXLFW: '方正报宋繁体',
+      FZXQFW: '方正细倩繁体',
+      FZXSHFW: '方正细珊瑚繁体',
+      FZXSHJW: '方正细珊瑚简体',
+      FZXSSFW: '方正新书宋繁体',
+      FZXXLFW: '方正新秀丽繁体',
+      FZXZTFW: '方正小篆体',
+      FZY1FW: '方正细圆繁体',
+      FZY1JW: '方正细圆简体',
+      FZY3FW: '方正准圆繁体',
+      FZY3JW: '方正准圆简体',
+      FZY4FW: '方正粗圆繁体',
+      FZY4JW: '方正粗圆简体',
+      FZYBKSFW: '方正硬笔楷书繁体',
+      FZYBKSJW: '方正硬笔楷书简体',
+      FZYBXSFW: '方正行笔楷书繁体',
+      FZYBXSJW: '方正行笔楷书简体',
+      FZYHFW: '方正艺黑繁体',
+      FZYHJW: '方正艺黑简体',
+      FZYTFW: '方正姚体繁体',
+      FZYTJW: '方正姚体简体',
+      FZYXFW: '方正幼线繁体',
+      FZYXJW: '方正幼线简体',
+      FZZBHFW: '方正毡笔黑繁体',
+      FZZBHJW: '方正毡笔黑简体',
+      FZZDXFW: '方正中等线繁体',
+      FZZDXJW: '方正中等线简体',
+      FZZHYFW: '方正稚艺简体',
+      FZZHYJW: '方正稚艺简体',
+      FZZKFW: '方正中楷繁体',
+      FZZQFW: '方正中倩繁体',
+      FZZQJW: '方正中倩简体',
+      FZZYFW: '方正综艺繁体',
+      FZZYJW: '方正综艺简体',
+      HYDaHeiF: '汉仪大黑繁体',
+      HYDaHeiJ: '汉仪大黑简体',
+      HYXiDengXianF: '汉仪细等线繁体',
+      HYXiDengXianJ: '汉仪细等线简体',
+      HYZhongDengXianF: '汉仪中等线繁体',
+      HYZhongDengXianJ: '汉仪中等线简体',
+      HYZhongHeiF: '汉仪中黑繁体',
+      HYZhongHeiJ: '汉仪中黑简体',
+      mb1b5m: '汉仪中黑B5',
+      mb1bjm: '汉仪中黑BJ',
+      mb2b5m: '汉仪大黑B5',
+      mb2bjm: '汉仪大黑BJ',
+      mg1b5m: '汉仪细等线B5',
+      mg1bjm: '汉仪细等线BJ',
+      mg2b5m: '汉仪中等线B5',
+      mg2bjm: '汉仪中等线BJ',
+      HYChangSongJ: '汉仪长宋简体',
+      HYCuHeiF: '汉仪粗黑繁体',
+      HYCuSongJ: '汉仪粗宋简体',
+      HYDaSongJ: '汉仪大宋简体',
+      HYDieYuTiJ: '汉仪蝶语体简体',
+      HYKaiTiJ: '汉仪楷体简体',
+      HYQinChuanFeiYingJ: '汉仪秦川飞影简体',
+      HYQingKongTiJ: '汉仪晴空体简体',
+      HYShangWeiShouShuJ: '汉仪尚巍手书简体',
+      HYXiaoBoMeiYanTiJ: '汉仪小波美颜体简体',
+      HYXiaoMaiTiJ: '汉仪小麦体简体',
+      HYXingKaiJ: '汉仪行楷简体',
+      HYXinRenWenSong55J: '汉仪新人文宋55简体',
+      HYXueJunTiJ: '汉仪学军体简体',
+      HYZhongSongJ: '汉仪中宋简体',
+      HYZhongYuanJ: '汉仪中圆简体',
+      HYZongYiTiJ: '汉仪综艺体简体',
+      'BXMYHFont-Regular': '波西米亚狂想黑'
+};
+
+const getCn = f => cnMap[f.family] || f.family;
+
+/* =========================
+   3. CDN + FontFace
+========================= */
+
+const CDN = "https://cdn.jsdelivr.net/gh/willychenkit-ui/font-preview@main/";
+
+const loaded = new Set();
+
+function url(file){
+  const p=file.split("/");
+  const n=encodeURIComponent(p.pop());
+  return CDN + [...p,n].join("/");
+}
+
+async function loadFont(f){
+  if(loaded.has(f.family)) return;
+
+  try{
+    const font=new FontFace(f.family,`url(${url(f.file)})`);
+    await font.load();
+    document.fonts.add(font);
+    loaded.add(f.family);
+  }catch(e){}
+}
+
+/* =========================
+   4. folders（默认 FZ-12）
+========================= */
+
+const folders=[...new Set(fonts.map(f=>f.file.split("/")[0]))];
+
+// 默认：只选 FZ-12
+const selected=new Set(["FZ-12"]);
+
+const folderList=document.getElementById("folderList");
+
+/* =========================
+   5. All / None
+========================= */
+
+function selectAll(){
+  selected.clear();
+  folders.forEach(f=>selected.add(f));
+  syncUI();
+  apply();
+}
+
+function selectNone(){
+  selected.clear();
+  syncUI();
+  apply();
+}
+
+/* =========================
+   6. folder UI
+========================= */
+
+function syncUI(){
+  document.querySelectorAll(".folderCB").forEach(cb=>{
+    const f=cb.dataset.folder;
+    cb.checked=selected.has(f);
+  });
+}
+
+folders.forEach(f=>{
+  const label=document.createElement("label");
+  label.className="folder-item";
+
+  const cb=document.createElement("input");
+  cb.type="checkbox";
+  cb.className="folderCB";
+  cb.dataset.folder=f;
+  cb.checked=selected.has(f);
+
+  cb.onchange=()=>{
+    if(cb.checked) selected.add(f);
+    else selected.delete(f);
+    apply();
+  };
+
+  label.appendChild(cb);
+  label.appendChild(document.createTextNode(f));
+  folderList.appendChild(label);
+});
+
+/* =========================
+   7. filter
+========================= */
+
+function filter(){
+  const q=document.getElementById("searchInput").value.toLowerCase();
+
+  return fonts.filter(f=>{
+    const folder=f.file.split("/")[0];
+    return selected.has(folder) &&
+      (f.family+getCn(f)).toLowerCase().includes(q);
+  });
+}
+
+/* =========================
+   8. render
+========================= */
+
+function render(list){
+  const grid=document.getElementById("grid");
+  grid.innerHTML="";
+
+  const text=document.getElementById("textInput").value;
+
+  const frag=document.createDocumentFragment();
+
+  list.forEach(f=>{
+
+    const card=document.createElement("div");
+    card.className="card";
+
+    const title=document.createElement("div");
+    title.className="title";
+    title.textContent=getCn(f);
+
+    const file=document.createElement("div");
+    file.className="file";
+    file.textContent=f.file;
+
+    const preview=document.createElement("div");
+    preview.className="preview";
+    preview.style.fontFamily=`"${f.family}"`;
+    preview.textContent=text;
+
+    card.appendChild(title);
+    card.appendChild(file);
+    card.appendChild(preview);
+
+    frag.appendChild(card);
+
+    loadFont(f);
+  });
+
+  grid.appendChild(frag);
+}
+
+/* =========================
+   9. main
+========================= */
+
+function apply(){
+  render(filter());
+}
+
+/* =========================
+   10. events
+========================= */
+
+document.getElementById("searchInput").oninput=apply;
+
+document.getElementById("textInput").oninput=()=>{
+  document.querySelectorAll(".preview").forEach(el=>{
+    el.textContent=document.getElementById("textInput").value;
+  });
+};
+
+/* =========================
+   11. init
+========================= */
+
+apply();
+
+</script>
+</body>
+</html>
